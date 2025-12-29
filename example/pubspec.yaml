@@ -1,5 +1,5 @@
-name: adaptive_ui_example
-description: Example app for the adaptive_ui package
+name: progressive_ui_example
+description: Example app for the progressive_ui package
 publish_to: 'none'
 
 version: 1.0.0
@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  adaptive_ui:
+  progressive_ui:
     path: ../
 
 dev_dependencies:

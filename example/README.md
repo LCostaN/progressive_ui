@@ -1,3 +1,3 @@
 # example
 
-Adaptive_UI example
+progressive_ui example
