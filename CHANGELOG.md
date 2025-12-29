@@ -1,3 +1,5 @@
-## 0.0.1
+## 0.1.0
 
-* TODO: Describe initial release.
+First publish!
+
+- AdaptiveRow and AdaptiveChild basic implementations (mostly proof of concept)

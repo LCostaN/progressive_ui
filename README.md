@@ -1,39 +1,136 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# adaptive_ui
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+A Flutter package for **priority-based responsive layouts**, focused on making Flex
+layouts (Row / Column) adapt predictably to available space.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+Instead of resizing or wrapping widgets, `adaptive_ui` **shows and hides groups of
+widgets in a defined order**, based on what fully fits.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+![AdaptiveRow demo](example.gif)
 
-## Features
+---
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+## Table of Contents
 
-## Getting started
+- [Motivation](#motivation)
+- [Core Idea](#core-idea)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Grouping Behavior](#grouping-behavior)
+- [Example](#example)
+- [Contributing](#contributing)
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+---
+
+## Motivation
+
+Flutter provides powerful layout primitives, but handling **progressive disclosure**
+of UI elements (toolbars, actions, filters) often leads to:
+
+- complex breakpoint logic
+- manual `Visibility` or `if` trees
+- layouts that partially render important UI
+
+`adaptive_ui` aims to solve this by offering **deterministic, size-aware layouts**
+that behave the same way regardless of platform or screen size.
+
+---
+
+## Core Idea
+
+Children are assigned a non-negative **order**.
+
+- Widgets with the same order form a **group**
+- Groups are evaluated from lowest to highest order
+- A group is rendered **only if all its widgets fit**
+- If a group does not fit, it and all higher orders are skipped
+
+This guarantees:
+
+- no partial UI
+- no skipped priorities
+- no visual instability
+
+---
+
+## Installation
+
+```yaml
+dependencies:
+  adaptive_ui: ^<latest-version>
+```
+
+---
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
 ```dart
-const like = 'sample';
+AdaptiveRow(
+  spacing: 8,
+  children: const [
+    AdaptiveChild(
+      order: 0,
+      child: Text('Required'),
+    ),
+    AdaptiveChild(
+      order: 1,
+      child: Icon(Icons.download),
+    ),
+    AdaptiveChild(
+      order: 2,
+      child: Text('Optional'),
+    ),
+  ],
+)
 ```
 
-## Additional information
+As available space decreases, widgets disappear group by group, never individually.
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+---
+
+## Grouping Behavior
+
+Multiple widgets may share the same order.
+
+```dart
+AdaptiveRow(
+  children: const [
+    AdaptiveChild(order: 0, child: Text('A')),
+    AdaptiveChild(order: 0, child: Text('B')),
+    AdaptiveChild(order: 1, child: Icon(Icons.settings)),
+    AdaptiveChild(order: 1, child: Icon(Icons.share)),
+  ],
+)
+```
+
+If order 1 does not fit, both icons are hidden together.
+
+This makes the layout ideal for:
+
+- toolbars
+- admin interfaces
+- dense data UIs
+- desktop and web applications
+
+---
+
+## Example
+
+An example application is available in the example/ directory.
+It demonstrates:
+
+- resizing behavior
+- order-based visibility (0, 1, 2, 3)
+- multiple widgets per order group
+- strict priority enforcement
+
+---
+
+## Contributing
+
+Contributions are welcome.
+If you plan to add new widgets, behaviors, or API changes:
+
+- open an issue first
+- include tests
+- keep APIs minimal and predictable

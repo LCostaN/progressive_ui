@@ -1,4 +1,40 @@
 include: package:flutter_lints/flutter.yaml
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+analyzer:
+  errors:
+    # Treat these as errors instead of warnings
+    missing_return: error
+    dead_code: error
+    unused_import: error
+    invalid_null_aware_operator: error
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    # --- Import Style ---
+    prefer_relative_imports: true
+    avoid_relative_lib_imports: true
+
+    # --- Code Style ---
+    always_use_package_imports: false
+    avoid_equals_and_hash_code_on_mutable_classes: true
+    avoid_print: true
+    omit_local_variable_types: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_expression_function_bodies: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+
+    # --- Readability ---
+    directives_ordering: true
+    require_trailing_commas: true
+    sort_child_properties_last: true
+    prefer_single_quotes: true
+    use_super_parameters: true
+    unnecessary_lambdas: true
+
+    # --- Pedantic-ish ---
+    unawaited_futures: true
+    cancel_subscriptions: true
+    close_sinks: true
