@@ -6,7 +6,7 @@ layouts that react predictably to available space.
 Instead of resizing or wrapping widgets, `progressive_ui` **shows and hides groups of
 widgets in a defined order**, based on what fully fits.
 
-![AdaptiveRow demo](example.gif)
+![Progressive UI example](https://raw.githubusercontent.com/LCostaN/progressive_ui/main/example.gif)
 
 ---
 
