@@ -1,9 +1,9 @@
-# adaptive_ui
+# progressive_ui
 
-A Flutter package for **priority-based responsive layouts**, focused on making Flex
-layouts (Row / Column) adapt predictably to available space.
+A Flutter package for **priority-based responsive layouts**, focused on making adaptive
+layouts that react predictably to available space.
 
-Instead of resizing or wrapping widgets, `adaptive_ui` **shows and hides groups of
+Instead of resizing or wrapping widgets, `progressive_ui` **shows and hides groups of
 widgets in a defined order**, based on what fully fits.
 
 ![AdaptiveRow demo](example.gif)
@@ -31,7 +31,7 @@ of UI elements (toolbars, actions, filters) often leads to:
 - manual `Visibility` or `if` trees
 - layouts that partially render important UI
 
-`adaptive_ui` aims to solve this by offering **deterministic, size-aware layouts**
+`progressive_ui` aims to solve this by offering **deterministic, size-aware layouts**
 that behave the same way regardless of platform or screen size.
 
 ---
@@ -57,7 +57,7 @@ This guarantees:
 
 ```yaml
 dependencies:
-  adaptive_ui: ^<latest-version>
+  progressive_ui: ^<latest-version>
 ```
 
 ---

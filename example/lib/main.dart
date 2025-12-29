@@ -1,5 +1,5 @@
-import 'package:adaptive_ui/adaptive_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:progressive_ui/progressive_ui.dart';
 
 void main() {
   runApp(const AdaptiveUiExampleApp());
@@ -11,7 +11,7 @@ class AdaptiveUiExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
-    title: 'adaptive_ui example',
+    title: 'progressive_ui example',
     theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo), useMaterial3: true),
     home: const ExamplePage(),
   );
