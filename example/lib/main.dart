@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:progressive_ui/progressive_ui.dart';
 
 void main() {
-  runApp(const AdaptiveUiExampleApp());
+  runApp(const ProgressiveUiExampleApp());
 }
 
-class AdaptiveUiExampleApp extends StatelessWidget {
-  const AdaptiveUiExampleApp({super.key});
+class ProgressiveUiExampleApp extends StatelessWidget {
+  const ProgressiveUiExampleApp({super.key});
 
   @override
   Widget build(BuildContext context) => MaterialApp(
