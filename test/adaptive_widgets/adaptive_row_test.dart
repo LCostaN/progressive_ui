@@ -55,40 +55,6 @@ void main() {
       );
       expect(renderBox, paintsNothing);
     });
-
-    //   testWidgets('are removed from semantics', (tester) async {
-    //     await tester.pumpWidget(
-    //       MaterialApp(
-    //         home: SizedBox(
-    //           width: 50,
-    //           child: AdaptiveRow(
-    //             children: const [
-    //               AdaptiveChild(order: 0, child: SizedBox(width: 30, child: Text('A'))),
-    //               AdaptiveChild(order: 1, child: SizedBox(width: 30, child: Text('B'))),
-    //               AdaptiveChild(order: 2, child: SizedBox(width: 30, child: Text('C'))),
-    //             ],
-    //           ),
-    //         ),
-    //       ),
-    //     );
-
-    //     final handle = tester.ensureSemantics();
-
-    //     final aSemantics = tester.getSemantics(find.text('A'));
-    //     expect(aSemantics.label, 'A');
-
-    //     expect(
-    //       () => tester.getSemantics(find.text('B')),
-    //       throwsFlutterError,
-    //     );
-
-    //     expect(
-    //       () => tester.getSemantics(find.text('C')),
-    //       throwsFlutterError,
-    //     );
-
-    //     handle.dispose();
-    //   });
   });
 
   group('Layout', () {
@@ -126,5 +92,163 @@ void main() {
         expectHidden(tester, 'child-2');
       },
     );
+  });
+
+  group('Row Properties', () {
+    group('MainAxisAlignment', () {
+      testWidgets('center positions children centered', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SizedBox(
+              width: 200,
+              child: AdaptiveRow(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  SizedBox(key: Key('a'), width: 40, height: 20),
+                  SizedBox(key: Key('b'), width: 40, height: 20),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        final a = tester.getRect(find.byKey(const Key('a')));
+        final b = tester.getRect(find.byKey(const Key('b')));
+
+        expect(a.left, greaterThan(0));
+        expect(b.left - a.right, equals(0));
+      });
+    });
+
+    group('MainAxisSize', () {
+      testWidgets('min wraps content', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Center(
+              child: AdaptiveRow(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  SizedBox(width: 30, height: 10),
+                  SizedBox(width: 30, height: 10),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        final size = tester.getSize(find.byType(AdaptiveRow));
+        expect(size.width, 60);
+      });
+    });
+
+    group('CrossAxisAlignment', () {
+      testWidgets('end aligns bottoms', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AdaptiveRow(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: const [
+                SizedBox(key: Key('a'), width: 20, height: 10),
+                SizedBox(key: Key('b'), width: 20, height: 30),
+              ],
+            ),
+          ),
+        );
+
+        final a = tester.getRect(find.byKey(const Key('a')));
+        final b = tester.getRect(find.byKey(const Key('b')));
+
+        expect(a.bottom, b.bottom);
+      });
+
+      testWidgets('stretch stretches children height', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Center(
+              child: SizedBox(
+                height: 100,
+                child: AdaptiveRow(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: const [
+                    SizedBox(key: Key('a'), width: 20),
+                    SizedBox(key: Key('b'), width: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final a = tester.getSize(find.byKey(const Key('a')));
+        final b = tester.getSize(find.byKey(const Key('b')));
+
+        expect(a.height, 100);
+        expect(b.height, 100);
+      });
+    });
+
+    group('TextDirection', () {
+      testWidgets('rtl reverses horizontal order', (tester) async {
+        await tester.pumpWidget(
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: AdaptiveRow(
+              children: const [
+                SizedBox(key: Key('a'), width: 20, height: 10),
+                SizedBox(key: Key('b'), width: 20, height: 10),
+              ],
+            ),
+          ),
+        );
+
+        final a = tester.getRect(find.byKey(const Key('a')));
+        final b = tester.getRect(find.byKey(const Key('b')));
+
+        expect(a.left, greaterThan(b.left));
+      });
+    });
+
+    group('VerticalDirection', () {
+      testWidgets('up inverts vertical alignment', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AdaptiveRow(
+              verticalDirection: VerticalDirection.up,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                SizedBox(key: Key('a'), width: 20, height: 10),
+                SizedBox(key: Key('b'), width: 20, height: 30),
+              ],
+            ),
+          ),
+        );
+
+        final a = tester.getRect(find.byKey(const Key('a')));
+        final b = tester.getRect(find.byKey(const Key('b')));
+
+        expect(a.top, greaterThan(b.top));
+      });
+    });
+
+    group('Spacing', () {
+      testWidgets('applies spacing between children', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AdaptiveRow(
+              spacing: 10,
+              children: const [
+                SizedBox(key: Key('a'), width: 20, height: 10),
+                SizedBox(key: Key('b'), width: 20, height: 10),
+              ],
+            ),
+          ),
+        );
+
+        final a = tester.getRect(find.byKey(const Key('a')));
+        final b = tester.getRect(find.byKey(const Key('b')));
+
+        expect(b.left - a.right, 10);
+      });
+    });
   });
 }

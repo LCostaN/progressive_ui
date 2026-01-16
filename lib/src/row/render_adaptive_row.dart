@@ -5,7 +5,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-// MARK: RenderBox
 import 'package:flutter/rendering.dart';
 
 import '../base/adaptive_parent_data.dart';
@@ -14,11 +13,81 @@ class RenderAdaptiveRow extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, AdaptiveParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, AdaptiveParentData> {
-  RenderAdaptiveRow({double spacing = 0}) : _spacing = spacing;
+  // MARK: RenderAdaptiveRow
+  RenderAdaptiveRow({
+    required MainAxisAlignment mainAxisAlignment,
+    required MainAxisSize mainAxisSize,
+    required CrossAxisAlignment crossAxisAlignment,
+    required TextDirection textDirection,
+    required VerticalDirection verticalDirection,
+    TextBaseline? textBaseline,
+    double spacing = 0,
+  })  : assert(spacing >= 0, 'RenderAdaptiveRow.spacing must be >= 0'),
+        assert(
+          crossAxisAlignment != CrossAxisAlignment.baseline || textBaseline != null,
+          'RenderAdaptiveRow: textBaseline is required when using CrossAxisAlignment.baseline',
+        ),
+        _mainAxisAlignment = mainAxisAlignment,
+        _mainAxisSize = mainAxisSize,
+        _crossAxisAlignment = crossAxisAlignment,
+        _textDirection = textDirection,
+        _verticalDirection = verticalDirection,
+        _textBaseline = textBaseline,
+        _spacing = spacing;
+
+  // MARK: Parameters
+  MainAxisAlignment _mainAxisAlignment;
+  MainAxisAlignment get mainAxisAlignment => _mainAxisAlignment;
+  set mainAxisAlignment(MainAxisAlignment value) {
+    if (_mainAxisAlignment == value) return;
+    _mainAxisAlignment = value;
+    markNeedsLayout();
+  }
+
+  MainAxisSize _mainAxisSize;
+  MainAxisSize get mainAxisSize => _mainAxisSize;
+  set mainAxisSize(MainAxisSize value) {
+    if (_mainAxisSize == value) return;
+    _mainAxisSize = value;
+    markNeedsLayout();
+  }
+
+  CrossAxisAlignment _crossAxisAlignment;
+  CrossAxisAlignment get crossAxisAlignment => _crossAxisAlignment;
+  set crossAxisAlignment(CrossAxisAlignment value) {
+    if (_crossAxisAlignment == value) return;
+    _crossAxisAlignment = value;
+    markNeedsLayout();
+  }
+
+  TextDirection _textDirection;
+  TextDirection get textDirection => _textDirection;
+  set textDirection(TextDirection value) {
+    if (_textDirection == value) return;
+    _textDirection = value;
+    markNeedsLayout();
+  }
+
+  VerticalDirection _verticalDirection;
+  VerticalDirection get verticalDirection => _verticalDirection;
+  set verticalDirection(VerticalDirection value) {
+    if (_verticalDirection == value) return;
+    _verticalDirection = value;
+    markNeedsLayout();
+  }
+
+  TextBaseline? _textBaseline;
+  TextBaseline? get textBaseline => _textBaseline;
+  set textBaseline(TextBaseline? value) {
+    if (_textBaseline == value) return;
+    _textBaseline = value;
+    markNeedsLayout();
+  }
 
   double _spacing;
   double get spacing => _spacing;
   set spacing(double value) {
+    assert(value >= 0, 'RenderAdaptiveRow.spacing must be >= 0');
     if (_spacing == value) return;
     _spacing = value;
     markNeedsLayout();
@@ -31,6 +100,7 @@ class RenderAdaptiveRow extends RenderBox
     }
   }
 
+  // MARK: Layout
   @override
   void performLayout() {
     if (firstChild == null) {
@@ -38,69 +108,151 @@ class RenderAdaptiveRow extends RenderBox
       return;
     }
 
-    // MARK: Lay Pre-Work
+    final isStretch = crossAxisAlignment == CrossAxisAlignment.stretch;
+    final isRtl = textDirection == TextDirection.rtl;
+
+    final hasBoundedHeight = constraints.hasBoundedHeight;
+    final maxHeight = hasBoundedHeight ? constraints.maxHeight : double.infinity;
+
+    // Pre-layout
     var child = firstChild;
     while (child != null) {
-      final parentData = child.parentData as AdaptiveParentData;
-      assert(parentData.order >= 0, 'AdaptiveRow: order must be a non-negative integer');
+      final pd = child.parentData as AdaptiveParentData;
 
-      child.layout(constraints.loosen(), parentUsesSize: true);
-      parentData.isVisible = false;
+      child.layout(
+        isStretch && hasBoundedHeight
+            ? BoxConstraints(
+                minWidth: 0,
+                maxWidth: constraints.maxWidth,
+                minHeight: maxHeight,
+                maxHeight: maxHeight,
+              )
+            : constraints.loosen(),
+        parentUsesSize: true,
+      );
 
-      child = parentData.nextSibling;
+      pd.isVisible = false;
+      child = pd.nextSibling;
     }
 
-    // MARK: Group by order
+    // Group by order
     final groups = <int, List<RenderBox>>{};
-
     child = firstChild;
     while (child != null) {
-      final parentData = child.parentData as AdaptiveParentData;
-      groups.putIfAbsent(parentData.order, () => []).add(child);
-      child = parentData.nextSibling;
+      final pd = child.parentData as AdaptiveParentData;
+      groups.putIfAbsent(pd.order, () => []).add(child);
+      child = pd.nextSibling;
     }
 
-    final sortedOrders = groups.keys.toList()..sort();
+    final orders = groups.keys.toList()..sort();
 
-    // MARK: Select Visible
-    final visibleChildren = <RenderBox>[];
+    // Select visible
+    final visible = <RenderBox>[];
     double usedWidth = 0;
-    var hasAnyGroup = false;
+    var hasAny = false;
 
-    for (final order in sortedOrders) {
+    for (final order in orders) {
       final group = groups[order]!;
+      var w = group.fold(0.0, (v, c) => v + c.size.width);
+      w += spacing * (group.length - 1);
 
-      double groupWidth = 0;
-      for (final c in group) {
-        groupWidth += c.size.width;
-      }
-      groupWidth += spacing * (group.length - 1);
+      final next = hasAny ? usedWidth + spacing + w : w;
+      if (next > constraints.maxWidth && hasAny) break;
 
-      final nextWidth = hasAnyGroup ? usedWidth + spacing + groupWidth : groupWidth;
+      visible.addAll(group);
+      usedWidth = next;
+      hasAny = true;
+    }
 
-      if (nextWidth > constraints.maxWidth && hasAnyGroup) {
+    // MainAxisSize
+    final containerWidth = mainAxisSize == MainAxisSize.max ? constraints.maxWidth : usedWidth;
+    final remaining = (containerWidth - usedWidth).clamp(0.0, double.infinity);
+
+    // MainAxisAlignment
+    double leadingSpace = 0;
+    var betweenSpace = spacing;
+
+    switch (mainAxisAlignment) {
+      case MainAxisAlignment.start:
+        if (isRtl) leadingSpace = remaining;
         break;
+      case MainAxisAlignment.end:
+        if (!isRtl) leadingSpace = remaining;
+        break;
+      case MainAxisAlignment.center:
+        leadingSpace = remaining / 2;
+        break;
+      case MainAxisAlignment.spaceBetween:
+        if (visible.length > 1) {
+          betweenSpace = spacing + remaining / (visible.length - 1);
+        }
+        break;
+      case MainAxisAlignment.spaceAround:
+        if (visible.isNotEmpty) {
+          betweenSpace = spacing + remaining / visible.length;
+          leadingSpace = betweenSpace / 2;
+        }
+        break;
+      case MainAxisAlignment.spaceEvenly:
+        if (visible.isNotEmpty) {
+          betweenSpace = spacing + remaining / (visible.length + 1);
+          leadingSpace = betweenSpace;
+        }
+        break;
+    }
+
+    // CrossAxis
+    final maxChildHeight = visible.fold<double>(
+      0,
+      (v, c) => v < c.size.height ? c.size.height : v,
+    );
+
+    final containerHeight = hasBoundedHeight ? constraints.maxHeight : maxChildHeight;
+    final layoutHeight = isStretch ? containerHeight : maxChildHeight;
+
+    var dx = isRtl ? containerWidth - leadingSpace : leadingSpace;
+
+    for (final c in visible) {
+      final pd = c.parentData as AdaptiveParentData;
+      pd.isVisible = true;
+
+      double dy = 0;
+      switch (crossAxisAlignment) {
+        case CrossAxisAlignment.start:
+          dy = 0;
+          break;
+        case CrossAxisAlignment.end:
+          dy = layoutHeight - c.size.height;
+          break;
+        case CrossAxisAlignment.center:
+          dy = (layoutHeight - c.size.height) / 2;
+          break;
+        case CrossAxisAlignment.baseline:
+          if (textBaseline != null) {
+            final baseline = c.getDistanceToBaseline(textBaseline!) ?? 0;
+            dy = layoutHeight - baseline;
+          }
+          break;
+        case CrossAxisAlignment.stretch:
+          dy = 0;
+          break;
       }
 
-      visibleChildren.addAll(group);
-      usedWidth = nextWidth;
-      hasAnyGroup = true;
+      if (verticalDirection == VerticalDirection.up) {
+        dy = layoutHeight - c.size.height - dy;
+      }
+
+      if (isRtl) {
+        dx -= c.size.width;
+        pd.offset = Offset(dx, dy);
+        dx -= betweenSpace;
+      } else {
+        pd.offset = Offset(dx, dy);
+        dx += c.size.width + betweenSpace;
+      }
     }
 
-    // MARK: Position Visible
-    double dx = 0;
-    double maxHeight = 0;
-
-    for (final c in visibleChildren) {
-      final parentData = c.parentData as AdaptiveParentData;
-      parentData.isVisible = true;
-      parentData.offset = Offset(dx, 0);
-
-      dx += c.size.width + spacing;
-      maxHeight = maxHeight < c.size.height ? c.size.height : maxHeight;
-    }
-
-    size = constraints.constrain(Size(dx > 0 ? dx - spacing : 0, maxHeight));
+    size = constraints.constrain(Size(containerWidth, containerHeight));
   }
 
   // MARK: Paint

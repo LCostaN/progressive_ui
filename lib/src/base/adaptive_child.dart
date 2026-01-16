@@ -7,9 +7,16 @@
 
 import 'package:flutter/widgets.dart';
 
-class AdaptiveChild {
+class AdaptiveChild extends StatelessWidget {
   final Widget child;
   final int order;
 
-  const AdaptiveChild({this.order = 0, required this.child}) : assert(order >= 0, 'order cannot be a negative value');
+  const AdaptiveChild({
+    super.key,
+    this.order = 0,
+    required this.child,
+  }) : assert(order >= 0, 'order cannot be a negative value');
+
+  @override
+  Widget build(BuildContext context) => child;
 }

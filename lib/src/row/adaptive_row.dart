@@ -22,6 +22,10 @@ class _AdaptiveSlot extends ParentDataWidget<AdaptiveParentData> {
 
   @override
   void applyParentData(RenderObject renderObject) {
+    if (renderObject.parentData is! AdaptiveParentData) {
+      renderObject.parentData = AdaptiveParentData();
+    }
+
     final parentData = renderObject.parentData as AdaptiveParentData;
 
     if (parentData.order != order) {
@@ -88,16 +92,66 @@ class _AdaptiveSlot extends ParentDataWidget<AdaptiveParentData> {
 ///   group does not fit, standard Flutter overflow behavior applies.
 // MARK: AdaptiveRow
 class AdaptiveRow extends MultiChildRenderObjectWidget {
-  final double spacing;
-
-  AdaptiveRow({super.key, this.spacing = 0, required List<AdaptiveChild> children})
-      : super(
-          children: children.map((c) => _AdaptiveSlot(order: c.order, child: c.child)).toList(),
+  AdaptiveRow({
+    super.key,
+    required List<Widget> children,
+    this.mainAxisAlignment = MainAxisAlignment.start,
+    this.mainAxisSize = MainAxisSize.max,
+    this.crossAxisAlignment = CrossAxisAlignment.center,
+    this.textDirection,
+    this.verticalDirection = VerticalDirection.down,
+    this.textBaseline,
+    this.spacing = 0.0,
+  })  : assert(spacing >= 0, 'spacing must be >= 0'),
+        super(
+          children: _normalizeChildren(children),
         );
 
-  @override
-  RenderObject createRenderObject(BuildContext context) => RenderAdaptiveRow(spacing: spacing);
+  final MainAxisAlignment mainAxisAlignment;
+  final MainAxisSize mainAxisSize;
+  final CrossAxisAlignment crossAxisAlignment;
+  final TextDirection? textDirection;
+  final VerticalDirection verticalDirection;
+  final TextBaseline? textBaseline;
+  final double spacing;
+
+  static List<Widget> _normalizeChildren(List<Widget> children) => children.map((widget) {
+        if (widget is AdaptiveChild) {
+          return _AdaptiveSlot(
+            order: widget.order,
+            child: widget.child,
+          );
+        }
+
+        return _AdaptiveSlot(
+          order: 0,
+          child: widget,
+        );
+      }).toList(growable: false);
 
   @override
-  void updateRenderObject(BuildContext context, RenderAdaptiveRow renderObject) => renderObject.spacing = spacing;
+  RenderAdaptiveRow createRenderObject(BuildContext context) => RenderAdaptiveRow(
+        mainAxisAlignment: mainAxisAlignment,
+        mainAxisSize: mainAxisSize,
+        crossAxisAlignment: crossAxisAlignment,
+        textDirection: textDirection ?? Directionality.of(context),
+        verticalDirection: verticalDirection,
+        textBaseline: textBaseline,
+        spacing: spacing,
+      );
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    RenderAdaptiveRow renderObject,
+  ) {
+    renderObject
+      ..mainAxisAlignment = mainAxisAlignment
+      ..mainAxisSize = mainAxisSize
+      ..crossAxisAlignment = crossAxisAlignment
+      ..textDirection = textDirection ?? Directionality.of(context)
+      ..verticalDirection = verticalDirection
+      ..textBaseline = textBaseline
+      ..spacing = spacing;
+  }
 }
